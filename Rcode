@@ -1,0 +1,200 @@
+LNI<-data$LNI
+AP<-data$AP
+
+library(MASS)
+
+
+##  predict the pi value from the fitted model###########
+pi<-function(LNI,AP){
+  n<-length(AP)
+fit<-glm(LNI~AP,family = binomial())
+h<-rep(0,n)
+
+
+fitted(fit)## fitted pihat
+
+}
+
+
+##  Leverage###############################
+Lev<-function(y,x){
+  n<-length(x)
+  fit<-glm(y~x,family = binomial())
+  h<-rep(0,n)
+  
+  pihat<-fitted(fit)## fitted pihat
+  
+  V<-diag(pihat*(1-pihat))
+  Xt<-matrix(c(rep(1,n),x),nrow=2,byrow=TRUE)
+  X<-t(Xt)
+  H<-V^(1/2)%*%X%*%solve(Xt%*%V%*%X)%*%Xt%*%V^(1/2)
+  
+  for(i in 1:n){
+    h[i]<-H[i,i]
+  }
+  h
+}
+Lev(LNI,AP)
+
+DM<-function(y,x){
+  n<-length(x)
+  fit<-glm(y~x,family = binomial())
+  b<-rep(0,n)
+  Xt<-matrix(c(rep(1,n),x),nrow=2,byrow=TRUE)
+  X<-t(Xt)
+  pihat<-fitted(fit)## fitted pihat
+  V<-diag(pihat*(1-pihat))
+  B<-X%*%solve(Xt%*%V%*%X)%*%Xt
+  for(i in 1:n){
+    b[i]<-B[i,i]
+  }
+  b   ##DM
+}
+b<-DM(LNI,AP)
+b
+dect(b)
+dect2(b)
+
+## dectect suspect using 2M leverage##############
+dectlev2<-function(x){
+  l=length(x)
+  s<-c()
+  for(i in 1: l){
+    if(x[i]>2*mean(x)){
+      s<-c(s,i)
+    }
+  }
+  s
+}
+
+
+## dectect suspect using 3M leverage##############
+dectlev3<-function(x){
+  l=length(x)
+  s<-c()
+  for(i in 1: l){
+    if(x[i]>3*mean(x)){
+      s<-c(s,i)
+    }
+  }
+  s
+}
+dectlev3(Lev(LNI,AP))
+
+##  dectect the suspect leverage point using MDM###############
+dect<-function(x){
+  l=length(x)
+  index<-c()
+  for(i in 1:l)
+  {if (x[i]>median(x)+3*median(abs(x-mean(x))))
+   index<-c(index,i) 
+  }
+  index
+}
+sus<-dect(b)
+
+
+
+dect2<- function(x){
+  l=length(x)
+  index<-c()
+  for(i in 1:l)
+  {if (x[i]>median(x)+3*quantile(abs(x-mean(x)),0.33))
+    index<-c(index,i) 
+  }
+  index
+}
+
+##calculate DDM using reduced model################
+DDM<-function(yd,xd,y,x){
+  n<-length(x)
+  nn<-length(xd)
+  fit<-glm(yd~xd,family = binomial())
+  b<-rep(0,n)
+  
+  pihat<-fitted(fit)## fitted pihat
+  
+  V<-diag(pihat*(1-pihat))
+  Xt<-matrix(c(rep(1,nn),xd),nrow=2,byrow=TRUE)
+  X<-t(Xt)
+
+  XXt<-matrix(c(rep(1,n),x),nrow=2,byrow=TRUE)
+  XX<-t(XXt)
+  
+
+  B<-XX%*%solve(Xt%*%V%*%X)%*%XXt
+  for(i in 1:n){
+    b[i]<-B[i,i]
+  }
+  b   ##DdM
+  
+}
+
+sus<-c(24,25,53)
+
+dd<-DDM(LNI[-sus],AP[-sus],LNI,AP)
+dect(dd)
+dect2(dd)
+x
+median(x)+3*median(abs(x-mean(x)))
+dect()
+dect2(x)
+
+
+
+
+
+
+
+############    tail   test    ####################################################
+   LNI2<-c(LNI,0,0,0,0,0,0,0)
+   AP2<-c(AP,200, 220, 240, 260, 280, 300 , 320)   
+pi(LNI2,AP2)
+
+ test2<- Lev(LNI2,AP2)
+
+
+dectlev2(Lev(LNI2,AP2))
+dectlev3(Lev(LNI2,AP2))
+dect(DM(LNI2,AP2))
+
+
+
+sus2<-c(24,25,53:60)
+sus2
+x<-DM(LNI2,AP2)
+median(x)+3*median(abs(x-mean(x)))
+dect(Lev(LNI2,AP2))
+dect(DDM(LNI2[-sus2],AP2[-sus2],LNI2,AP2))
+DDM(LNI2[-sus2],AP2[-sus2],LNI2,AP2)
+x<-DDM(LNI2[-sus2],AP2[-sus2],LNI2,AP2)
+dect(x)
+dect2(x)
+options(digits = 8)
+median(x)+3*median(abs(x-mean(x)))
+median(x)+median(abs(x-median(x)))
+median(x)+2*median(abs(x-median(x)))
+median(x)+3*median(abs(x-median(x)))
+median(x)+4*median(abs(x-median(x)))
+median(x)+5*median(abs(x-median(x)))
+dect2(x)
+dect2(b)
+###################################################
+
+testx<-c(10.2379,	11.2833,	11.6081,	11.8463,	13.603,	14.2217,	14.2455,	14.6833,	15.4942,	15.6448,	16.1364,	16.5975,	16.9506,	19.2271,	30,	32,	34,	36,	38,	40
+)
+testy<-c(rep(0,5),rep(1,5),rep(0,5),rep(1,5))
+
+
+pi(testy,testx)
+l<-Lev(testy,testx)
+d<-DM(testy,testx)
+dectlev2(l)
+dectlev3(l)
+dect(d)
+median(dd)+3*median(abs(dd-mean(dd)))
+dd
+sus3<-15:20
+dd<-DDM(testy[-sus3],testx[-sus3],testy,testx)
+dd
+dect(dd)
